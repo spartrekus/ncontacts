@@ -856,10 +856,9 @@ int main( int argc, char *argv[])
     {
         printf( "File Source Missing\n" );
         chdir( getenv( "HOME" ));
-        if ( fexist( "coding/mobiledoc/ncontacts.dat" ) == 1 ) 
+        if ( fexist( "ncontacts.dat" ) == 1 ) 
         {
-             chdir( "coding" );
-             chdir( "mobiledoc" );
+             
              strncpy( thefilename, "ncontacts.dat" , PATH_MAX );
         }
     }
