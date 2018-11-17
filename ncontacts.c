@@ -849,18 +849,22 @@ int main( int argc, char *argv[])
     //strncpy( thefilename, "ncontacts.csv" , PATH_MAX );
     strncpy( thefilename, "noname.csv" , PATH_MAX );
     FILE *fpout;
+    char beforepath[PATH_MAX];
 
 
     ////////////////////////////////////////////////////////
     if ( argc == 1)
     {
+        strncpy( beforepath, getcwd( cwd, PATH_MAX ) , PATH_MAX );
         printf( "File Source Missing\n" );
         chdir( getenv( "HOME" ));
-        if ( fexist( "ncontacts.dat" ) == 1 ) 
+        if ( fexist( ".ncontacts.dat" ) == 1 ) 
         {
-             
-             strncpy( thefilename, "ncontacts.dat" , PATH_MAX );
+             chdir( getenv( "HOME" ));
+             strncpy( thefilename, ".ncontacts.dat" , PATH_MAX );
         }
+        else 
+        { chdir( beforepath ); }
     }
 
 
@@ -870,7 +874,7 @@ int main( int argc, char *argv[])
        strncpy( thefilename, argv[ 1 ] , PATH_MAX );
     }
 
-  printf( "File Source: %s\n", thefilename );
+   printf( "File Source: %s\n", thefilename );
 
   initscr();			
   keypad(stdscr, true);
@@ -913,6 +917,7 @@ int main( int argc, char *argv[])
     switch( ch )
     {
          case 'q':
+         case KEY_F(10):
          gameover = 1;
          break;
 
@@ -1040,6 +1045,14 @@ int main( int argc, char *argv[])
                 if ( fexist( thefilename ) == 1 ) 
                   ncontacts_saveappend(  foostr );
 		break;
+
+        case '#':
+            erase(); i = 2 ; 
+            mvprintw( i++, 2, "Before: %s",  beforepath);
+            mvprintw( i++, 2, "Path Now: %s",  getcwd( cwd, PATH_MAX ));
+            mvprintw( i++, 2, "File: %s",  thefilename );
+            getch();
+            break;
 
 
          case 'I':
