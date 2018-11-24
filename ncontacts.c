@@ -25,6 +25,7 @@
 
 
 #include <stdlib.h>
+
 #include <dirent.h>
 #include <string.h>
 #include <string.h>
@@ -38,6 +39,8 @@
 #include <ncurses.h>
 int rows, cols; 
 char clipboard[PATH_MAX];
+int ncontacts_displayfile = 0;
+int ncontacts_revcolor = 1;
 
 
 void mvcenter( int myposypass, char *mytext )
@@ -686,6 +689,7 @@ void nvim( char *thecmd   )
        strncat( cmdi , thecmd , PATH_MAX - strlen( cmdi ) -1 );
        strncat( cmdi , "\"" , PATH_MAX - strlen( cmdi ) -1 );
        strncat( cmdi , " " , PATH_MAX - strlen( cmdi ) -1 );
+       printf( "CMD: %s\n", cmdi );
        system( cmdi );
        reset_prog_mode();
 }
@@ -705,6 +709,7 @@ void nrunwith( char *theprg , char *thefile )
        strncat( cmdi , thefile , PATH_MAX - strlen( cmdi ) -1 );
        strncat( cmdi , "\"" , PATH_MAX - strlen( cmdi ) -1 );
        strncat( cmdi , " " , PATH_MAX - strlen( cmdi ) -1 );
+       printf( "CMD: %s\n", cmdi );
        system( cmdi );
        reset_prog_mode();
 }
@@ -765,6 +770,11 @@ void ncontacts_draw()
        int posyy = 2 ;  
        int zui = 0 ;  FILE *fpsource;  char ptrout[PATH_MAX];
        color_set( 7, NULL );  attron( A_REVERSE );
+
+       if(  ncontacts_revcolor == 1 ) {
+         color_set( 0, NULL );  attroff( A_REVERSE );
+       }
+
        gfxbox( 0, cols/2-2, rows-1, cols-1 );
        gfxframe( 0, cols/2-2, rows-1, cols-1 );
        mvprintw( 0, cols/2, "[FILE: %s (%d)]", fbasename( ttuxfile ) , fexist( ttuxfile ) ); 
@@ -825,14 +835,113 @@ void printfile_viewer( char *filex )
 
 
 
+char *fbasewithoutfilename(char* mystr)
+{
+    char *retstr;
+    char *lastdot;
+    if (mystr == NULL)
+         return NULL;
+    if ((retstr = malloc (strlen (mystr) + 1)) == NULL)
+        return NULL;
+    strcpy (retstr, mystr);
+    lastdot = strrchr (retstr, '/');
+    if (lastdot != NULL)
+        *lastdot = '\0';
+    return retstr;
+}
+
+
+      ////////////////
+        int ndesk_menu_select( char *p1, char *p2, char *p3, char *p4 , char *p5 , char *p6, char *p7)
+        {
+               int ndesk_menu_select_gameover = 0; 
+               int fooch = 0; int foxiy = 2;  int itemnav = 1;
+
+               while( ndesk_menu_select_gameover == 0)
+               { foxiy = 2;
+               if ( itemnav <= 1 ) itemnav = 1;
+               color_set( 13, NULL ); attroff( A_REVERSE );
+               gfxrectangle( rows*25/100, cols*25/100 , rows*75/100, cols*75/100 );
+               gfxframe( rows*25/100, cols*25/100 , rows*75/100, cols*75/100 );
+               color_set( 17, NULL ); attron( A_REVERSE );
+               mvcenter( rows*25/100, "| Menu File |" );
+               color_set( 13, NULL ); attroff( A_REVERSE );
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p1); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p2); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p3); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p4); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p5); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p6); 
+               if ( itemnav == foxiy-1 ) attron( A_REVERSE ); else attroff( A_REVERSE );
+               mvprintw( rows*25/100 +foxiy++, cols*25/100+2, "%s", p7); 
+               color_set( 5, NULL ); attron( A_REVERSE );
+               mvcenter( rows*75/100 -1, "[ Esc: Cancel ]" );
+               fooch = getch();
+               if ( fooch == 'j' ) 
+                   itemnav++;
+               else if ( fooch == 'g' ) itemnav = 1;
+               else if ( fooch == 'k' ) 
+                   itemnav--;
+               else if ( ( fooch == 'l' ) || ( fooch == 10 ) )
+               {    ndesk_menu_select_gameover = 1; 
+                    fooch = itemnav + 48;  
+               }
+               else 
+                 ndesk_menu_select_gameover = 1;
+ 
+               }
+               return fooch ;  
+        }
+     
+
+
+
+void ncontacts_show_fileextension( char *myfile , char *myext )
+{
+         char foostring[PATH_MAX];
+         char foocmd[PATH_MAX];
+         strncpy( foostring, strsplit( myfile ,  ';' ,  1 ) , PATH_MAX );
+         strncpy( foocmd , "data/" , PATH_MAX );
+         strncat( foocmd , foostring  , PATH_MAX - strlen( foocmd ) -1 );
+         strncat( foocmd , "-data." , PATH_MAX - strlen( foocmd ) -1 );
+         strncat( foocmd , myext , PATH_MAX - strlen( foocmd ) -1 );
+         if ( strcmp( myfile , "" ) != 0 ) 
+          if ( strcmp( foostring, "" ) != 0 ) 
+           printfile( foocmd ); 
+         color_set( 0, NULL ); attroff( A_REVERSE ); attroff( A_BOLD );
+}
+
+
+void ncontacts_open_fileextension( char *myfile , char *myext )
+{
+         char foostring[PATH_MAX];
+         char foocmd[PATH_MAX];
+         strncpy( foostring, strsplit( myfile ,  ';' ,  1 ) , PATH_MAX );
+         strncpy( foocmd , "data/" , PATH_MAX );
+         strncat( foocmd , foostring  , PATH_MAX - strlen( foocmd ) -1 );
+         strncat( foocmd , "-data." , PATH_MAX - strlen( foocmd ) -1 );
+         strncat( foocmd , myext , PATH_MAX - strlen( foocmd ) -1 );
+         if ( strcmp( userselline , "" ) != 0 ) 
+          if ( strcmp( foostring, "" ) != 0 ) 
+            printfile_viewer( foocmd ); 
+         color_set( 0, NULL ); attroff( A_REVERSE ); attroff( A_BOLD );
+}
+
 
 ////////////////////////////////////////
 int main( int argc, char *argv[])
 {
-    int i ;  
+    int i, fooint ;  
     char foostring[PATH_MAX];
     char foostr[PATH_MAX];
     char cwd[PATH_MAX];
+    char mylinetorun[PATH_MAX];
 
     if ( argc >= 2)
     {
@@ -846,35 +955,49 @@ int main( int argc, char *argv[])
 
     int toxi;
     printf( "NCONTACTS \n" );
-    //strncpy( thefilename, "ncontacts.csv" , PATH_MAX );
     strncpy( thefilename, "noname.csv" , PATH_MAX );
     FILE *fpout;
     char beforepath[PATH_MAX];
 
-
+    strncpy( beforepath, getcwd( cwd, PATH_MAX ) , PATH_MAX );
     ////////////////////////////////////////////////////////
     if ( argc == 1)
     {
-        strncpy( beforepath, getcwd( cwd, PATH_MAX ) , PATH_MAX );
-        printf( "File Source Missing\n" );
-        chdir( getenv( "HOME" ));
-        if ( fexist( ".ncontacts.dat" ) == 1 ) 
+        ////printf( "File Source Missing\n" );
+        ///chdir( getenv( "HOME" ));
+        strncpy( foostr , getenv( "HOME" ) , PATH_MAX );
+        strncat( foostr , "/"  ,             PATH_MAX - strlen( foostr ) -1 );
+        strncat( foostr , ".ncontacts.dat" , PATH_MAX - strlen( foostr ) -1 );
+        if ( fexist( foostr ) == 1 ) 
         {
-             chdir( getenv( "HOME" ));
              strncpy( thefilename, ".ncontacts.dat" , PATH_MAX );
+             printf( "Foostr:   %s\n" , foostr );
+             printf( "Filepath (no lstat): %s\n" ,         fbasewithoutfilename( foostr ) );
+
+             char buf[512];
+             int count = readlink( foostr  , buf, sizeof(buf));
+             if (count >= 0) 
+             {
+                 buf[count] = '\0';
+                 printf("%s -> %s\n", foostr , buf);
+                 printf( ">Conv (with lstat): %s\n" , fbasewithoutfilename( buf ) );
+                 chdir( fbasewithoutfilename( buf ) );
+                 printf( ">My pwd: %s\n" , getcwd( cwd, PATH_MAX ) );
+             }
         }
         else 
         { chdir( beforepath ); }
     }
 
 
+
     if ( argc >= 2)
     if ( fexist( argv[1] ) == 1 )
     {
-       strncpy( thefilename, argv[ 1 ] , PATH_MAX );
+        strncpy( thefilename, argv[ 1 ] , PATH_MAX );
     }
 
-   printf( "File Source: %s\n", thefilename );
+    printf( "File Source: %s\n", thefilename );
 
   initscr();			
   keypad(stdscr, true);
@@ -890,13 +1013,15 @@ int main( int argc, char *argv[])
   init_pair(6,  COLOR_CYAN,    COLOR_BLACK);
   init_pair(7,  COLOR_BLUE,    COLOR_WHITE);
 
-  init_pair(10, COLOR_BLUE,  COLOR_YELLOW   );
+  init_pair( 10, COLOR_BLUE,  COLOR_YELLOW   );
   init_pair( 19, COLOR_MAGENTA , COLOR_BLUE);
   init_pair( 20 , COLOR_RED , COLOR_BLUE);
   init_pair( 21 , COLOR_BLUE , COLOR_YELLOW);
   init_pair( 22, COLOR_YELLOW,  COLOR_CYAN);
   init_pair( 23, COLOR_WHITE,   COLOR_BLUE);
 
+  init_pair( 13, COLOR_BLACK,  COLOR_CYAN   );
+  init_pair( 17, COLOR_BLUE ,  COLOR_YELLOW   );
 
 
   curs_set( 0 );
@@ -910,8 +1035,11 @@ int main( int argc, char *argv[])
     getmaxyx( stdscr, rows, cols );
     color_set( 0, NULL ); attroff( A_REVERSE ); attroff( A_BOLD );
     attroff( A_REVERSE );
+
     ncontacts_checkvar();
     ncontacts_draw();
+    if ( ncontacts_displayfile == 1 ) ncontacts_show_fileextension( userselline, "txt" );
+
     attroff( A_REVERSE );
     ch = getch();
     switch( ch )
@@ -959,8 +1087,23 @@ int main( int argc, char *argv[])
              ncurses_runwith( strninput( rows-1, "" ) , thefilename );
              break;
 
+         case 'r':
+         case KEY_F(3):
+            strncpy( foostring, strsplit( userselline ,  ';' ,  1 ) , PATH_MAX );
+            if ( strcmp( foostring, "" ) != 0 )
+            {
+              if ( fexist( "data" ) != 2 ) nruncmd( " mkdir data  ");
+              strncpy( foocmd , "data/" , PATH_MAX );
+              strncat( foocmd ,  strstring2nbr( foostring )  , PATH_MAX - strlen( foocmd ) -1 );
+              strncat( foocmd , "-data.txt" , PATH_MAX - strlen( foocmd ) -1 );
+              if ( fexist( "data" ) == 2 ) 
+               if ( strcmp( foostring, "" ) != 0 ) 
+                nrunwith( " tcview " , foocmd );
+            }
+            break;
 
          case 'e':
+         case KEY_F(4):
             strncpy( foostring, strsplit( userselline ,  ';' ,  1 ) , PATH_MAX );
             if ( strcmp( foostring, "" ) != 0 )
             {
@@ -1009,15 +1152,44 @@ int main( int argc, char *argv[])
          break;
 
          case 'b':
-         case 10:
          strncpy( foostring, strsplit( userselline ,  ';' ,  1 ) , PATH_MAX );
-         strncpy( foocmd , "data/" , PATH_MAX );
-         strncat( foocmd , foostring  , PATH_MAX - strlen( foocmd ) -1 );
-         strncat( foocmd , "-data.txt" , PATH_MAX - strlen( foocmd ) -1 );
-         if ( strcmp( userselline , "" ) != 0 ) 
-          if ( strcmp( foostring, "" ) != 0 ) 
-            printfile_viewer( foocmd ); 
-         color_set( 0, NULL ); attroff( A_REVERSE ); attroff( A_BOLD );
+         color_set( 22 , NULL ); gfxhline( 0 );
+         mvprintw( rows-1 , 0 ,   "FILE: %s", foostring );
+         color_set( 0 , NULL ); 
+         fooint = ndesk_menu_select( "1: Set file preview...", "2: Open WS1...", "3: Open MRK...", "4: Open TXT...", "5: Set reverse color..." , "6: FreeLotus123" , "Q: Quit!" );
+
+         if      ( fooint == '6' ) 
+         {
+            strncpy( foostring, strsplit( userselline ,  ';' ,  1 ) , PATH_MAX );
+            strncpy( foocmd , "data/" , PATH_MAX );
+            strncat( foocmd , foostring  , PATH_MAX - strlen( foocmd ) -1 );
+            strncat( foocmd , "-datadoc.ws1" , PATH_MAX - strlen( foocmd ) -1 );
+            nrunwith( " freelotus123 " , foocmd );
+         }
+
+         else if ( fooint == '2' ) ncontacts_open_fileextension( userselline, "ws1" );
+         else if ( fooint == '3' ) ncontacts_open_fileextension( userselline, "mrk" );
+         else if ( fooint == '4' ) ncontacts_open_fileextension( userselline, "txt" );
+         else if ( fooint == '1' )
+         {
+            if (  ncontacts_displayfile == 0 ) 
+                ncontacts_displayfile = 1 ; 
+            else
+                ncontacts_displayfile = 0 ; 
+         }
+         else if ( fooint == '5' )
+         {
+            if (  ncontacts_revcolor == 0 ) 
+                ncontacts_revcolor = 1 ; 
+            else
+                ncontacts_revcolor = 0 ; 
+         }
+         break;
+
+
+         case 'o':
+         case 10:
+         ncontacts_open_fileextension( userselline, "txt" );
          break;
 
 
@@ -1048,9 +1220,9 @@ int main( int argc, char *argv[])
 
         case '#':
             erase(); i = 2 ; 
-            mvprintw( i++, 2, "Before: %s",  beforepath);
+            mvprintw( i++, 2, "Before: %s",    beforepath);
             mvprintw( i++, 2, "Path Now: %s",  getcwd( cwd, PATH_MAX ));
-            mvprintw( i++, 2, "File: %s",  thefilename );
+            mvprintw( i++, 2, "File: %s",      thefilename );
             getch();
             break;
 
